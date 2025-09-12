@@ -1,5 +1,5 @@
         // Texto que será exibido no <title>
-        const titleText = "@onurworkss";
+        const titleText = "@enriqu3lla";
         let index = 0;
 
         // Função para animar o título
