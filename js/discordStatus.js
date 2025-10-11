@@ -1,6 +1,6 @@
 function atualizarPerfilDiscord() {
     // URL atualizada para apontar para o seu serviço no Render
-    fetch('https://asdadsasdasddsadsadsasddadas.onrender.com/status')
+    fetch('http://ensdcseysi.onrender.com/status/852629327891660881')
     .then(response => response.json())
     .then(data => {
         // Atualizar a foto do perfil (se disponível)
