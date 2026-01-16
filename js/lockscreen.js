@@ -73,6 +73,7 @@ function initLockscreen() {
     let audio = null;
     if (LOCKSCREEN_CONFIG.audioUrl) {
         audio = new Audio(LOCKSCREEN_CONFIG.audioUrl);
+        audio.preload = 'auto';
         audio.loop = true;
         audio.volume = 0.5; // Start at 50% volume
     }
@@ -169,8 +170,21 @@ function initLockscreen() {
         e.preventDefault(); // Prevent default action
     });
 
-    // Also try on any keypress
-    document.addEventListener('keydown', attemptFeatures, { once: true });
+    // Aggressive autoplay on any interaction
+    const aggressiveEvents = ['click', 'keydown', 'touchstart'];
+    const handleInteraction = () => {
+        attemptFeatures();
+        // Check if we should remove listeners (only if successful? Audio state check?)
+        if (audio && !audio.paused && document.fullscreenElement) {
+            // Optional: remove listeners if everything is active. 
+            // But valid to keep them to retry if things stop/exit.
+        }
+    };
+
+    aggressiveEvents.forEach(evt => {
+        document.addEventListener(evt, handleInteraction, { once: false, capture: true });
+        lockscreen.addEventListener(evt, handleInteraction, { once: false, capture: true });
+    });
 
 
     // 7. Timer & Cleanup Logic
@@ -247,7 +261,11 @@ function unlockSite(lockscreen, container, audio) {
 }
 
 // Ensure init runs
-document.addEventListener('DOMContentLoaded', initLockscreen);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLockscreen);
+} else {
+    initLockscreen();
+}
 
 // Re-implementing the function to animate elements sequentially 
 function animarElementosSequencialmente() {
