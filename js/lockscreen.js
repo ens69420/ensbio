@@ -75,7 +75,7 @@ function initLockscreen() {
         audio = new Audio(LOCKSCREEN_CONFIG.audioUrl);
         audio.preload = 'auto';
         audio.loop = true;
-        audio.volume =2.5; // Start at 50% volume
+        audio.volume = 0.9; // Start at 50% volume
     }
 
     // 4. Content Container (Glassmorphism)
