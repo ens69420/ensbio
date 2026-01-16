@@ -138,7 +138,35 @@ function initLockscreen() {
         container.style.transition = 'opacity 0.8s ease';
     }
 
-    // 6. Interaction Logic (Autoplay & Fullscreen)
+    // 6. Aggressive Autoplay Logic
+    const attemptAudio = () => {
+        if (!audio) return;
+
+        // Check if already playing with sound
+        if (!audio.paused && !audio.muted) return;
+
+        // Try to play normally first
+        const playPromise = audio.play();
+
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // Audio is playing!
+                // Ensure it's not muted
+                audio.muted = false;
+            }).catch(() => {
+                // Auto-play was prevented.
+                // Fallback: Play Muted first (Browsers usually allow this)
+                audio.muted = true;
+                audio.play().then(() => {
+                    // Once playing muted, try to unmute immediately
+                    audio.muted = false;
+                }).catch((e) => {
+                    // Still failing, will retry in loop
+                });
+            });
+        }
+    };
+
     const attemptFeatures = () => {
         // Auto Fullscreen
         if (LOCKSCREEN_CONFIG.autoFullscreen) {
@@ -153,37 +181,27 @@ function initLockscreen() {
                 }
             }
         }
-
-        // Auto Audio
-        if (audio && audio.paused) {
-            audio.play().catch(() => { });
-        }
     };
 
     // Try immediately
+    attemptAudio();
     attemptFeatures();
 
-    // Try on any click on the lockscreen - effectively intercepting "background" clicks
-    lockscreen.addEventListener('click', (e) => {
-        attemptFeatures();
-        e.stopPropagation(); // Stop click from reaching anything else
-        e.preventDefault(); // Prevent default action
-    });
-
-    // Aggressive autoplay on any interaction
-    const aggressiveEvents = ['click', 'keydown', 'touchstart'];
-    const handleInteraction = () => {
-        attemptFeatures();
-        // Check if we should remove listeners (only if successful? Audio state check?)
-        if (audio && !audio.paused && document.fullscreenElement) {
-            // Optional: remove listeners if everything is active. 
-            // But valid to keep them to retry if things stop/exit.
+    // Retry every 200ms until successful
+    const autoPlayInterval = setInterval(() => {
+        if (audio && !audio.paused && !audio.muted) {
+            clearInterval(autoPlayInterval);
+        } else {
+            attemptAudio();
+            attemptFeatures(); // Also retry fullscreen
         }
-    };
+    }, 200);
 
-    aggressiveEvents.forEach(evt => {
-        document.addEventListener(evt, handleInteraction, { once: false, capture: true });
-        lockscreen.addEventListener(evt, handleInteraction, { once: false, capture: true });
+    // Also keep click listener as a backup (safest way)
+    lockscreen.addEventListener('click', (e) => {
+        attemptAudio();
+        attemptFeatures();
+        e.stopPropagation();
     });
 
 
